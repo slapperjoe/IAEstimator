@@ -1,342 +1,398 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IA Lemming Impact Estimator</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #1a1a2e;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Courier New', monospace;
-    color: #e0e0e0;
-    overflow: hidden;
-  }
-  h1 {
-    font-size: 1.4rem;
-    color: #f0c040;
-    text-shadow: 2px 2px #000;
-    margin-bottom: 12px;
-  }
-  #canvas {
-    background: #2a2a4a;
-    border: 3px solid #505070;
-    border-radius: 6px;
-    display: block;
-    max-width: 95vw;
-  }
-  #controls {
-    display: flex;
-    gap: 16px;
-    margin-top: 16px;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  button {
-    font-family: 'Courier New', monospace;
-    font-size: 1.1rem;
-    font-weight: bold;
-    padding: 10px 28px;
-    background: #e04040;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.15s;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
-  button:hover { background: #ff5050; }
-  button:active { background: #c03030; }
-  button:disabled { background: #555; cursor: default; }
-  #result {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #60e060;
-    min-height: 2.4rem;
-    text-shadow: 0 0 8px #2a2;
-  }
-  #info {
-    font-size: 0.85rem;
-    color: #8888aa;
-    margin-top: 8px;
-  }
-</style>
-</head>
-<body>
-<h1>🔫 IA Lemming Impact Estimator</h1>
-<canvas id="canvas" width="800" height="450"></canvas>
-<div id="controls">
-  <button id="fireBtn">💥 IMPACT!</button>
-  <div id="result"></div>
-</div>
-<div id="info">Launch 120 lemmings to <em>impact</em> the wall. The number that hit = your IA (Impact Assessment) estimate (0–120). <br><em>Ready to assess the impact?</em></div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Lemming Impact Assessment Estimator</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                background: #1a1a2e;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                font-family: "Courier New", monospace;
+                color: #e0e0e0;
+                overflow: hidden;
+            }
+            h1 {
+                font-size: 1.4rem;
+                color: #f0c040;
+                text-shadow: 2px 2px #000;
+                margin-bottom: 12px;
+            }
+            #canvas {
+                background: #2a2a4a;
+                border: 3px solid #505070;
+                border-radius: 6px;
+                display: block;
+                max-width: 95vw;
+            }
+            #controls {
+                display: flex;
+                gap: 16px;
+                margin-top: 16px;
+                align-items: center;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            button {
+                font-family: "Courier New", monospace;
+                font-size: 1.1rem;
+                font-weight: bold;
+                padding: 10px 28px;
+                background: #e04040;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: background 0.15s;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+            button:hover {
+                background: #ff5050;
+            }
+            button:active {
+                background: #c03030;
+            }
+            button:disabled {
+                background: #555;
+                cursor: default;
+            }
+            #result {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #60e060;
+                min-height: 2.4rem;
+                text-shadow: 0 0 8px #2a2;
+            }
+            #info {
+                font-size: 0.85rem;
+                color: #8888aa;
+                margin-top: 8px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🔫 IA Lemming Impact Estimator</h1>
+        <canvas id="canvas" width="800" height="450"></canvas>
+        <div id="controls">
+            <button id="fireBtn">💥 IMPACT!</button>
+            <div id="result"></div>
+        </div>
+        <div id="info">
+            Launch 120 lemmings to <em>impact</em> the wall. The number that hit
+            = your IA (Impact Assessment) estimate (0–120). <br /><em
+                >Ready to assess the impact?</em
+            >
+        </div>
 
-<script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const fireBtn = document.getElementById('fireBtn');
-const resultEl = document.getElementById('result');
+        <script>
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            const fireBtn = document.getElementById("fireBtn");
+            const resultEl = document.getElementById("result");
 
-// --- Constants ---
-const LEMMING_COUNT = 120;
-const GRAVITY = 0.15;
-const CANON_X = 60;
-const CANON_Y = 350;
-const WALL_X = 700;
-const WALL_W = 30;
-const WALL_H = 300;
-const WALL_BASE_Y = CANON_Y;
+            // --- Constants ---
+            const LEMMING_COUNT = 120;
+            const GRAVITY = 0.15;
+            const CANON_X = 60;
+            const CANON_Y = 350;
+            const WALL_X = 700;
+            const WALL_W = 30;
+            const WALL_H = 300;
+            const WALL_BASE_Y = CANON_Y;
 
-// Lemming palette (Psygnosis style)
-const COLORS = {
-  skin: '#f0c070',
-  shirt: '#4080e0',
-  overalls: '#3050a0',
-  hair: '#604020',
-  boot: '#302010',
-  hat: '#503020',
-};
+            // Lemming palette (Psygnosis style)
+            const COLORS = {
+                skin: "#f0c070",
+                shirt: "#4080e0",
+                overalls: "#3050a0",
+                hair: "#604020",
+                boot: "#302010",
+                hat: "#503020",
+            };
 
-let lemmings = [];
-let animating = false;
-let hitCount = 0;
-let frameId = null;
+            let lemmings = [];
+            let animating = false;
+            let hitCount = 0;
+            let frameId = null;
 
-// --- Lemming Sprite Drawing ---
-function drawLemming(x, y, angle, idx) {
-  const s = 12; // sprite size
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle);
+            // --- Lemming Sprite Drawing ---
+            function drawLemming(x, y, angle, idx) {
+                const s = 12; // sprite size
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
 
-  // Body (overalls)
-  ctx.fillStyle = COLORS.overalls;
-  ctx.fillRect(-s/2, -s/4, s, s/2);
+                // Body (overalls)
+                ctx.fillStyle = COLORS.overalls;
+                ctx.fillRect(-s / 2, -s / 4, s, s / 2);
 
-  // Shirt
-  ctx.fillStyle = COLORS.shirt;
-  ctx.fillRect(-s/2, -s, s, s*0.6);
+                // Shirt
+                ctx.fillStyle = COLORS.shirt;
+                ctx.fillRect(-s / 2, -s, s, s * 0.6);
 
-  // Head
-  ctx.fillStyle = COLORS.skin;
-  ctx.beginPath();
-  ctx.arc(0, -s * 0.6, s * 0.35, 0, Math.PI * 2);
-  ctx.fill();
+                // Head
+                ctx.fillStyle = COLORS.skin;
+                ctx.beginPath();
+                ctx.arc(0, -s * 0.6, s * 0.35, 0, Math.PI * 2);
+                ctx.fill();
 
-  // Hair
-  ctx.fillStyle = COLORS.hair;
-  ctx.fillRect(-s * 0.35, -s * 1.15, s * 0.7, s * 0.25);
+                // Hair
+                ctx.fillStyle = COLORS.hair;
+                ctx.fillRect(-s * 0.35, -s * 1.15, s * 0.7, s * 0.25);
 
-  // Legs (simple walking animation based on idx + frame)
-  const legPhase = Math.sin(idx * 0.5);
-  ctx.fillStyle = COLORS.boot;
-  ctx.fillRect(-s * 0.25, s * 0.15, s * 0.2, s * 0.3);
-  ctx.fillRect(s * 0.05, s * 0.15, s * 0.2, s * 0.3);
+                // Legs (simple walking animation based on idx + frame)
+                const legPhase = Math.sin(idx * 0.5);
+                ctx.fillStyle = COLORS.boot;
+                ctx.fillRect(-s * 0.25, s * 0.15, s * 0.2, s * 0.3);
+                ctx.fillRect(s * 0.05, s * 0.15, s * 0.2, s * 0.3);
 
-  // Arms
-  ctx.fillStyle = COLORS.skin;
-  ctx.fillRect(-s * 0.55, -s * 0.7, s * 0.2, s * 0.5);
-  ctx.fillRect(s * 0.35, -s * 0.7, s * 0.2, s * 0.5);
+                // Arms
+                ctx.fillStyle = COLORS.skin;
+                ctx.fillRect(-s * 0.55, -s * 0.7, s * 0.2, s * 0.5);
+                ctx.fillRect(s * 0.35, -s * 0.7, s * 0.2, s * 0.5);
 
-  // Eyes
-  ctx.fillStyle = '#101010';
-  ctx.fillRect(s * 0.05, -s * 0.75, 2, 2);
+                // Eyes
+                ctx.fillStyle = "#101010";
+                ctx.fillRect(s * 0.05, -s * 0.75, 2, 2);
 
-  ctx.restore();
-}
+                ctx.restore();
+            }
 
-// --- Cannon Drawing ---
-function drawCannon() {
-  // Barrel
-  ctx.fillStyle = '#555';
-  ctx.fillRect(CANON_X - 10, CANON_Y - 80, 20, 80);
+            // --- Cannon Drawing ---
+            function drawCannon() {
+                // Barrel
+                ctx.fillStyle = "#555";
+                ctx.fillRect(CANON_X - 10, CANON_Y - 80, 20, 80);
 
-  // Base
-  ctx.fillStyle = '#444';
-  ctx.fillRect(CANON_X - 30, CANON_Y - 10, 60, 10);
+                // Base
+                ctx.fillStyle = "#444";
+                ctx.fillRect(CANON_X - 30, CANON_Y - 10, 60, 10);
 
-  // Wheels
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(CANON_X - 20, CANON_Y, 8, 0, Math.PI * 2);
-  ctx.arc(CANON_X + 20, CANON_Y, 8, 0, Math.PI * 2);
-  ctx.fill();
-}
+                // Wheels
+                ctx.fillStyle = "#333";
+                ctx.beginPath();
+                ctx.arc(CANON_X - 20, CANON_Y, 8, 0, Math.PI * 2);
+                ctx.arc(CANON_X + 20, CANON_Y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
-// --- Wall Drawing ---
-function drawWall() {
-  ctx.fillStyle = '#606060';
-  ctx.fillRect(WALL_X, WALL_BASE_Y - WALL_H, WALL_W, WALL_H);
+            // --- Wall Drawing ---
+            function drawWall() {
+                ctx.fillStyle = "#606060";
+                ctx.fillRect(WALL_X, WALL_BASE_Y - WALL_H, WALL_W, WALL_H);
 
-  // Brick pattern
-  ctx.strokeStyle = '#404040';
-  ctx.lineWidth = 1;
-  for (let by = WALL_BASE_Y - WALL_H; by < WALL_BASE_Y; by += 20) {
-    ctx.beginPath();
-    ctx.moveTo(WALL_X, by);
-    ctx.lineTo(WALL_X + WALL_W, by);
-    ctx.stroke();
-    let offset = (Math.floor((WALL_BASE_Y - WALL_H - by) / 20) % 2) * 15;
-    ctx.beginPath();
-    ctx.moveTo(WALL_X + 15 + offset, by);
-    ctx.lineTo(WALL_X + 15 + offset, by + 20);
-    ctx.stroke();
-  }
-}
+                // Brick pattern
+                ctx.strokeStyle = "#404040";
+                ctx.lineWidth = 1;
+                for (
+                    let by = WALL_BASE_Y - WALL_H;
+                    by < WALL_BASE_Y;
+                    by += 20
+                ) {
+                    ctx.beginPath();
+                    ctx.moveTo(WALL_X, by);
+                    ctx.lineTo(WALL_X + WALL_W, by);
+                    ctx.stroke();
+                    let offset =
+                        (Math.floor((WALL_BASE_Y - WALL_H - by) / 20) % 2) * 15;
+                    ctx.beginPath();
+                    ctx.moveTo(WALL_X + 15 + offset, by);
+                    ctx.lineTo(WALL_X + 15 + offset, by + 20);
+                    ctx.stroke();
+                }
+            }
 
-// --- Lemming Class ---
-class Lemming {
-  constructor(idx) {
-    this.idx = idx;
-    this.x = CANON_X;
-    this.y = CANON_Y - 80;
-    this.prevX = this.x;
-    this.vx = 2 + Math.random() * 5;
-    this.vy = -(1 + Math.random() * 7);
-    this.angle = Math.atan2(this.vy, this.vx);
-    this.active = false;
-    this.hit = false;
-    this.bounced = false;
-    this.launchFrame = idx * 0.5; // stagger: 0.5 frames per lemming
-    this.frame = 0;
-  }
+            // --- Lemming Class ---
+            class Lemming {
+                constructor(idx) {
+                    this.idx = idx;
+                    this.x = CANON_X;
+                    this.y = CANON_Y - 80;
+                    this.prevX = this.x;
+                    this.vx = 2 + Math.random() * 5;
+                    this.vy = -(1 + Math.random() * 7);
+                    this.angle = Math.atan2(this.vy, this.vx);
+                    this.active = false;
+                    this.hit = false;
+                    this.bounced = false;
+                    this.launchFrame = idx * 0.5; // stagger: 0.5 frames per lemming
+                    this.frame = 0;
+                }
 
-  update() {
-    if (this.frame < this.launchFrame) {
-      this.frame++;
-      if (this.frame === this.launchFrame) {
-        this.active = true;
-      }
-      return;
-    }
-    if (!this.active) return;
+                update() {
+                    if (this.frame < this.launchFrame) {
+                        this.frame++;
+                        if (this.frame === this.launchFrame) {
+                            this.active = true;
+                        }
+                        return;
+                    }
+                    if (!this.active) return;
 
-    this.vy += GRAVITY;
-    this.prevX = this.x;
-    this.x += this.vx;
-    this.y += this.vy;
-    this.angle = Math.atan2(this.vy, this.vx);
+                    this.vy += GRAVITY;
+                    this.prevX = this.x;
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.angle = Math.atan2(this.vy, this.vx);
 
-    // Wall collision
-    if (!this.hit && this.x >= WALL_X && this.x < WALL_X + WALL_W && this.y >= (WALL_BASE_Y - WALL_H) && this.y <= WALL_BASE_Y) {
-      this.hit = true;
-      this.active = false;
-      return;
-    }
+                    // Wall collision
+                    if (
+                        !this.hit &&
+                        this.x >= WALL_X &&
+                        this.x < WALL_X + WALL_W &&
+                        this.y >= WALL_BASE_Y - WALL_H &&
+                        this.y <= WALL_BASE_Y
+                    ) {
+                        this.hit = true;
+                        this.active = false;
+                        return;
+                    }
 
-    // Tunneling check: fast lemming skipped past the wall zone in one frame
-    if (!this.hit && !this.bounced && this.prevX < WALL_X && this.x >= WALL_X && this.y >= (WALL_BASE_Y - WALL_H) && this.y <= WALL_BASE_Y) {
-      this.hit = true;
-      this.active = false;
-      return;
-    }
+                    // Tunneling check: fast lemming skipped past the wall zone in one frame
+                    if (
+                        !this.hit &&
+                        !this.bounced &&
+                        this.prevX < WALL_X &&
+                        this.x >= WALL_X &&
+                        this.y >= WALL_BASE_Y - WALL_H &&
+                        this.y <= WALL_BASE_Y
+                    ) {
+                        this.hit = true;
+                        this.active = false;
+                        return;
+                    }
 
-    // Missed the wall — bounce away
-    if (!this.hit && !this.bounced && this.x > WALL_X + WALL_W) {
-      this.bounced = true;
-      this.vx = -Math.abs(this.vx) * 0.6;
-    }
+                    // Missed the wall — bounce away
+                    if (
+                        !this.hit &&
+                        !this.bounced &&
+                        this.x > WALL_X + WALL_W
+                    ) {
+                        this.bounced = true;
+                        this.vx = -Math.abs(this.vx) * 0.6;
+                    }
 
-    // Off screen
-    if (this.x < -30 || this.y > canvas.height + 30 || (this.bounced && this.x < -30)) {
-      this.active = false;
-    }
-  }
+                    // Off screen
+                    if (
+                        this.x < -30 ||
+                        this.y > canvas.height + 30 ||
+                        (this.bounced && this.x < -30)
+                    ) {
+                        this.active = false;
+                    }
+                }
 
-  draw() {
-    if (!this.active) return;
-    drawLemming(this.x, this.y, this.angle, this.idx);
-  }
-}
+                draw() {
+                    if (!this.active) return;
+                    drawLemming(this.x, this.y, this.angle, this.idx);
+                }
+            }
 
-// --- Main Render ---
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // --- Main Render ---
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Sky gradient
-  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  grad.addColorStop(0, '#1a1a3a');
-  grad.addColorStop(1, '#2a2a5a');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Sky gradient
+                const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                grad.addColorStop(0, "#1a1a3a");
+                grad.addColorStop(1, "#2a2a5a");
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Ground
-  ctx.fillStyle = '#3a5a2a';
-  ctx.fillRect(0, WALL_BASE_Y, canvas.width, canvas.height - WALL_BASE_Y);
+                // Ground
+                ctx.fillStyle = "#3a5a2a";
+                ctx.fillRect(
+                    0,
+                    WALL_BASE_Y,
+                    canvas.width,
+                    canvas.height - WALL_BASE_Y,
+                );
 
-  drawCannon();
-  drawWall();
+                drawCannon();
+                drawWall();
 
-  for (const l of lemmings) {
-    l.update();
-    l.draw();
-  }
+                for (const l of lemmings) {
+                    l.update();
+                    l.draw();
+                }
 
-  // Update hit count
-  hitCount = lemmings.filter(l => l.hit).length;
+                // Update hit count
+                hitCount = lemmings.filter((l) => l.hit).length;
 
-  const activeCount = lemmings.filter(l => l.active).length;
+                const activeCount = lemmings.filter((l) => l.active).length;
 
-  if (activeCount === 0 && lemmings.length > 0) {
-    let quip = '';
-    if (hitCount <= 15) quip = "Minimal impact — barely a scratch!";
-    else if (hitCount <= 40) quip = "Moderate impact — a decent dent!";
-    else if (hitCount <= 70) quip = "Significant impact — the wall is stressed!";
-    else if (hitCount <= 100) quip = "Massive impact — the wall is in trouble!";
-    else quip = "Catastrophic impact — total devastation!";
-    resultEl.textContent = hitCount + ' — ' + quip;
-    fireBtn.disabled = false;
-    animating = false;
-    frameId = null;
-    return;
-  }
+                if (activeCount === 0 && lemmings.length > 0) {
+                    let quip = "";
+                    if (hitCount <= 15)
+                        quip = "Minimal impact — barely a scratch!";
+                    else if (hitCount <= 40)
+                        quip = "Moderate impact — a decent dent!";
+                    else if (hitCount <= 70)
+                        quip = "Significant impact — the wall is stressed!";
+                    else if (hitCount <= 100)
+                        quip = "Massive impact — the wall is in trouble!";
+                    else quip = "Catastrophic impact — total devastation!";
+                    resultEl.textContent = hitCount + " — " + quip;
+                    fireBtn.disabled = false;
+                    animating = false;
+                    frameId = null;
+                    return;
+                }
 
-  frameId = requestAnimationFrame(render);
-}
+                frameId = requestAnimationFrame(render);
+            }
 
-// --- Fire Handler ---
-function fireLemmings() {
-  if (animating) return;
-  animating = true;
-  fireBtn.disabled = true;
-  resultEl.textContent = '';
-  hitCount = 0;
+            // --- Fire Handler ---
+            function fireLemmings() {
+                if (animating) return;
+                animating = true;
+                fireBtn.disabled = true;
+                resultEl.textContent = "";
+                hitCount = 0;
 
-  // Cancel any pending animation frame
-  if (frameId !== null) {
-    cancelAnimationFrame(frameId);
-    frameId = null;
-  }
+                // Cancel any pending animation frame
+                if (frameId !== null) {
+                    cancelAnimationFrame(frameId);
+                    frameId = null;
+                }
 
-  lemmings = [];
-  for (let i = 0; i < LEMMING_COUNT; i++) {
-    lemmings.push(new Lemming(i));
-  }
+                lemmings = [];
+                for (let i = 0; i < LEMMING_COUNT; i++) {
+                    lemmings.push(new Lemming(i));
+                }
 
-  render();
-}
+                render();
+            }
 
-// --- Init ---
-fireBtn.addEventListener('click', fireLemmings);
+            // --- Init ---
+            fireBtn.addEventListener("click", fireLemmings);
 
-// Initial render
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-grad.addColorStop(0, '#1a1a3a');
-grad.addColorStop(1, '#2a2a5a');
-ctx.fillStyle = grad;
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-ctx.fillStyle = '#3a5a2a';
-ctx.fillRect(0, WALL_BASE_Y, canvas.width, canvas.height - WALL_BASE_Y);
-drawCannon();
-drawWall();
-</script>
-</body>
+            // Initial render
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, "#1a1a3a");
+            grad.addColorStop(1, "#2a2a5a");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#3a5a2a";
+            ctx.fillRect(
+                0,
+                WALL_BASE_Y,
+                canvas.width,
+                canvas.height - WALL_BASE_Y,
+            );
+            drawCannon();
+            drawWall();
+        </script>
+    </body>
 </html>
