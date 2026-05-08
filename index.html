@@ -534,7 +534,7 @@
 
                 const activeCount = lemmings.filter((l) => l.active).length;
 
-                if (activeCount === 0 && lemmings.length > 0) {
+                if (activeCount === 0 && lemmings.length > 0 && !explosionActive) {
                     let quip = "";
                     if (hitCount <= 15)
                         quip = "Minimal impact — barely a scratch!";
@@ -550,6 +550,7 @@
                         // Trigger explosion sequence
                         triggerExplosion();
                         resultEl.textContent = hitCount + " — " + quip;
+                        frameId = requestAnimationFrame(render);
                         return; // Continue animating for explosion
                     }
 
