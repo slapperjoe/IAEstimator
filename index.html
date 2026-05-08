@@ -78,19 +78,70 @@
                 color: #8888aa;
                 margin-top: 8px;
             }
+            #gunpowder-group {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin: 0 12px;
+            }
+            #gunpowder-group label {
+                font-family: "Courier New", monospace;
+                font-size: 0.85rem;
+                color: #f0c040;
+                margin-bottom: 4px;
+            }
+            input[type="range"] {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 180px;
+                height: 6px;
+                background: #505070;
+                border-radius: 3px;
+                outline: none;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 18px;
+                height: 18px;
+                background: #e04040;
+                border-radius: 50%;
+                cursor: pointer;
+            }
+            input[type="range"]::-moz-range-thumb {
+                width: 18px;
+                height: 18px;
+                background: #e04040;
+                border-radius: 50%;
+                cursor: pointer;
+                border: none;
+            }
+            #gunpowder-val {
+                font-family: "Courier New", monospace;
+                font-size: 0.9rem;
+                color: #60e060;
+                margin-top: 2px;
+            }
         </style>
     </head>
     <body>
-        <h1>🔫 IA Lemming Impact Estimator</h1>
+        <h1>🔫 Lemming Impact Assessment Estimator<</h1>
         <canvas id="canvas" width="800" height="450"></canvas>
         <div id="controls">
             <button id="fireBtn">💥 IMPACT!</button>
+            <div id="gunpowder-group">
+                <label for="gunpowder">
+                    <span id="gunpowder-label">Gunpowder Barrels</span>
+                </label>
+                <input type="range" id="gunpowder" min="1" max="10" value="5" step="1" />
+                <div id="gunpowder-val">Size: M</div>
+            </div>
             <div id="result"></div>
         </div>
         <div id="info">
             Launch 120 lemmings to <em>impact</em> the wall. The number that hit
             = your IA (Impact Assessment) estimate (0–120). <br /><em
-                >Ready to assess the impact?</em
+                >Adjust the T-shirt-sized gunpowder to control velocity!</em>
             >
         </div>
 
@@ -102,7 +153,7 @@
 
             // --- Constants ---
             const LEMMING_COUNT = 120;
-            const GRAVITY = 0.15;
+            const GRAVITY = 0.08;
             const CANON_X = 60;
             const CANON_Y = 350;
             const WALL_X = 700;
@@ -170,11 +221,15 @@
 
             // --- Cannon Drawing ---
             function drawCannon() {
-                // Barrel
+                // Barrel — rotated to point RIGHT, mounted on the carriage
+                ctx.save();
+                ctx.translate(CANON_X, CANON_Y - 15);
+                ctx.rotate(-Math.PI / 2);
                 ctx.fillStyle = "#555";
-                ctx.fillRect(CANON_X - 10, CANON_Y - 80, 20, 80);
+                ctx.fillRect(-10, -40, 20, 80);
+                ctx.restore();
 
-                // Base
+                // Base / carriage
                 ctx.fillStyle = "#444";
                 ctx.fillRect(CANON_X - 30, CANON_Y - 10, 60, 10);
 
@@ -212,14 +267,67 @@
                 }
             }
 
+            // --- Blood Splatters ---
+            let bloodSplats = [];
+
+            function addBloodSplat(y) {
+                bloodSplats.push({
+                    x: WALL_X,
+                    y: y,
+                    r: 4 + Math.random() * 8,
+                });
+                // Cap splats so we don't slow down rendering
+                if (bloodSplats.length > 120) {
+                    bloodSplats.shift();
+                }
+            }
+
+            function drawBloodSplats() {
+                for (const s of bloodSplats) {
+                    ctx.save();
+                    ctx.fillStyle = "#a01010";
+                    ctx.globalAlpha = 0.85;
+                    // Irregular splat shape using multiple circles
+                    ctx.beginPath();
+                    ctx.arc(s.x + 5, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(s.x + 10, s.y - s.r * 0.4, s.r * 0.6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(s.x + 3, s.y + s.r * 0.5, s.r * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // --- T-Shirt Sizing ---
+            const TSHIRT_SIZES = ["", "XS", "S", "S", "M", "M", "M", "L", "L", "XL", "XL"];
+
+            // Gunpowder slider → velocity multiplier
+            function getVelocityMultiplier() {
+                const val = parseInt(gunpowderSlider.value, 10);
+                // Map 1-10 to velocity range: 1→0.9x, 10→4x
+                return 0.9 + (val - 1) * 0.34;
+            }
+
+            function updateGunpowderLabel() {
+                const val = parseInt(gunpowderSlider.value, 10);
+                const size = TSHIRT_SIZES[val];
+                gunpowderVal.textContent = "Size: " + size;
+                gunpowderLabel.textContent = "Gunpowder Barrels (" + size + ")";
+            }
+
             // --- Lemming Class ---
             class Lemming {
                 constructor(idx) {
                     this.idx = idx;
-                    this.x = CANON_X;
-                    this.y = CANON_Y - 80;
+                    this.x = CANON_X + 40; // end of horizontal barrel
+                    this.y = CANON_Y;
                     this.prevX = this.x;
-                    this.vx = 2 + Math.random() * 5;
+                    const mult = getVelocityMultiplier();
+                    // Base vx range 3-8, multiplied by gunpowder
+                    this.vx = (3 + Math.random() * 5) * mult;
                     this.vy = -(1 + Math.random() * 7);
                     this.angle = Math.atan2(this.vy, this.vx);
                     this.active = false;
@@ -230,14 +338,13 @@
                 }
 
                 update() {
-                    if (this.frame < this.launchFrame) {
+                    if (!this.active && this.frame >= this.launchFrame) {
+                        this.active = true;
+                    }
+                    if (!this.active) {
                         this.frame++;
-                        if (this.frame === this.launchFrame) {
-                            this.active = true;
-                        }
                         return;
                     }
-                    if (!this.active) return;
 
                     this.vy += GRAVITY;
                     this.prevX = this.x;
@@ -255,6 +362,7 @@
                     ) {
                         this.hit = true;
                         this.active = false;
+                        addBloodSplat(this.y);
                         return;
                     }
 
@@ -269,6 +377,7 @@
                     ) {
                         this.hit = true;
                         this.active = false;
+                        addBloodSplat(this.y);
                         return;
                     }
 
@@ -320,6 +429,7 @@
 
                 drawCannon();
                 drawWall();
+                drawBloodSplats();
 
                 for (const l of lemmings) {
                     l.update();
@@ -366,6 +476,9 @@
                     frameId = null;
                 }
 
+                // Clear old blood splats
+                bloodSplats = [];
+
                 lemmings = [];
                 for (let i = 0; i < LEMMING_COUNT; i++) {
                     lemmings.push(new Lemming(i));
@@ -375,6 +488,12 @@
             }
 
             // --- Init ---
+            const gunpowderSlider = document.getElementById("gunpowder");
+            const gunpowderVal = document.getElementById("gunpowder-val");
+            const gunpowderLabel = document.getElementById("gunpowder-label");
+
+            gunpowderSlider.addEventListener("input", updateGunpowderLabel);
+            updateGunpowderLabel(); // set initial label
             fireBtn.addEventListener("click", fireLemmings);
 
             // Initial render
