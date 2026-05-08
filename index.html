@@ -122,6 +122,27 @@
                 color: #60e060;
                 margin-top: 2px;
             }
+            /* --- Explosion Animations --- */
+            @keyframes pageShake {
+                0%, 100% { transform: translate(0, 0); }
+                10% { transform: translate(-8px, -4px); }
+                20% { transform: translate(8px, -4px); }
+                30% { transform: translate(-8px, 4px); }
+                40% { transform: translate(8px, 4px); }
+                50% { transform: translate(-4px, 0); }
+                60% { transform: translate(4px, 0); }
+                70% { transform: translate(-2px, 2px); }
+                80% { transform: translate(2px, -2px); }
+                90% { transform: translate(-1px, 1px); }
+            }
+            @keyframes pageExplode {
+                0% { opacity: 1; transform: scale(1) rotate(0deg); }
+                50% { opacity: 0.5; transform: scale(1.5) rotate(180deg); filter: brightness(3); }
+                100% { opacity: 0; transform: scale(0); }
+            }
+            body.exploding {
+                animation: pageShake 0.5s ease-in-out 3, pageExplode 1.5s 1.5s forwards;
+            }
         </style>
     </head>
     <body>
@@ -407,6 +428,76 @@
                 }
             }
 
+            // --- Explosion Effects ---
+            let explosionParticles = [];
+            let explosionActive = false;
+            let explosionPhase = 0; // 0=idle, 1=wall explodes, 2=page explodes
+            let explosionFrame = 0;
+            const EXPLOSION_WALL_DURATION = 60; // frames for wall explosion
+            const EXPLOSION_PAGE_DELAY = 30; // frames before page explodes
+
+            function triggerExplosion() {
+                explosionActive = true;
+                explosionPhase = 1;
+                explosionFrame = 0;
+                // Create wall explosion particles
+                for (let i = 0; i < 80; i++) {
+                    explosionParticles.push({
+                        x: WALL_X + WALL_W / 2 + (Math.random() - 0.5) * WALL_W,
+                        y: WALL_BASE_Y - WALL_H / 2 + (Math.random() - 0.5) * WALL_H,
+                        vx: (Math.random() - 0.5) * 12,
+                        vy: -(Math.random() * 8),
+                        size: 3 + Math.random() * 6,
+                        life: 80 + Math.random() * 40,
+                        color: Math.random() > 0.5 ? "#e04040" : "#f0c040",
+                    });
+                }
+            }
+
+            function updateExplosion() {
+                if (!explosionActive) return;
+
+                explosionFrame++;
+
+                // Wall explosion phase
+                if (explosionPhase === 1 && explosionFrame >= EXPLOSION_WALL_DURATION) {
+                    explosionPhase = 2;
+                    // Trigger page explosion
+                    document.body.classList.add("exploding");
+                }
+
+                // Update particles
+                for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                    const p = explosionParticles[i];
+                    p.vy += 0.15; // gravity on particles
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                    if (p.life <= 0) {
+                        explosionParticles.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawExplosion() {
+                // White flash during wall explosion
+                if (explosionPhase === 1 && explosionFrame < 10) {
+                    ctx.save();
+                    ctx.globalAlpha = 1 - (explosionFrame / 10) * 0.7;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(WALL_X - 20, WALL_BASE_Y - WALL_H - 20, WALL_W + 40, WALL_H + 40);
+                    ctx.restore();
+                }
+
+                for (const p of explosionParticles) {
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.life / 120);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+                    ctx.restore();
+                }
+            }
+
             // --- Main Render ---
             function render() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -428,8 +519,10 @@
                 );
 
                 drawCannon();
-                drawWall();
+                if (explosionPhase !== 1) drawWall(); // hide wall during explosion
                 drawBloodSplats();
+                drawExplosion();
+                updateExplosion();
 
                 for (const l of lemmings) {
                     l.update();
@@ -452,11 +545,29 @@
                     else if (hitCount <= 100)
                         quip = "Massive impact — the wall is in trouble!";
                     else quip = "Catastrophic impact — total devastation!";
+
+                    if (hitCount > 100 && !explosionActive) {
+                        // Trigger explosion sequence
+                        triggerExplosion();
+                        resultEl.textContent = hitCount + " — " + quip;
+                        return; // Continue animating for explosion
+                    }
+
                     resultEl.textContent = hitCount + " — " + quip;
                     fireBtn.disabled = false;
                     animating = false;
                     frameId = null;
                     return;
+                }
+
+                // Continue animation for explosion
+                if (explosionActive && (explosionPhase === 1 || explosionPhase === 2)) {
+                    if (explosionPhase === 2 && explosionFrame > EXPLOSION_WALL_DURATION + EXPLOSION_PAGE_DELAY + 90) {
+                        // Explosion finished
+                        animating = false;
+                        frameId = null;
+                        return;
+                    }
                 }
 
                 frameId = requestAnimationFrame(render);
@@ -469,6 +580,13 @@
                 fireBtn.disabled = true;
                 resultEl.textContent = "";
                 hitCount = 0;
+
+                // Reset explosion state
+                explosionActive = false;
+                explosionPhase = 0;
+                explosionFrame = 0;
+                explosionParticles = [];
+                document.body.classList.remove("exploding");
 
                 // Cancel any pending animation frame
                 if (frameId !== null) {
