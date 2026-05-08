@@ -542,11 +542,11 @@
                         quip = "Moderate impact — a decent dent!";
                     else if (hitCount <= 70)
                         quip = "Significant impact — the wall is stressed!";
-                    else if (hitCount <= 100)
+                    else if (hitCount <= 99)
                         quip = "Massive impact — the wall is in trouble!";
-                    else quip = "Catastrophic impact — total devastation!";
+                    else quip = "💥 CATASTROPHIC IMPACT — the wall will NOT survive this!";
 
-                    if (hitCount > 100 && !explosionActive) {
+                    if (hitCount >= 100 && !explosionActive) {
                         // Trigger explosion sequence
                         triggerExplosion();
                         resultEl.textContent = hitCount + " — " + quip;
